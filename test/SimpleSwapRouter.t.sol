@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import {Test, console2} from "forge-std/Test.sol";
 import {SimpleSwapWithRouter} from "../src/SimpleSwapWithRouter.sol";
 import "../src/interfaces/IUniswapV2Pair.sol";
+import "../src/interfaces/IERC20.sol";
 
 contract SimpleSwapWithRouterTest is Test {
     SimpleSwapWithRouter public simpleSwapWithRouter;
@@ -23,10 +24,13 @@ contract SimpleSwapWithRouterTest is Test {
         path[0] = weth;
         path[1] = usdc;
 
-        vm.prank(address(0xb0b));
-        simpleSwapWithRouter.performSwapWithRouter(path);
+        uint256 deadline = block.timestamp + 1 minutes;
 
-        uint256 puzzleBal = IUniswapV2Pair(usdc).balanceOf(address(simpleSwapWithRouter));
+        vm.prank(address(0xb0b));
+        simpleSwapWithRouter.performSwapWithRouter(path, deadline);
+
+        uint256 puzzleBal = IERC20(usdc).balanceOf(address(simpleSwapWithRouter));
+        console2.log("balence: ", puzzleBal);
         require(puzzleBal > 0, "Swap Failed.");
     }
 }

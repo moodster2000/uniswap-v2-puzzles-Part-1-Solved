@@ -17,8 +17,11 @@ contract SimpleSwapWithRouter {
         router = _router;
     }
 
-    function performSwapWithRouter(address[] calldata path) public {
-        // your code start here
+    function performSwapWithRouter(address[] calldata path, uint256 deadline) public {
+        uint256 userBalance = address(this).balance;
+        
+        uint256 amountOutMin = 1; // set a minimal amount to prevent reverts for this example        
+        IUniswapV2Router(router).swapExactETHForTokens{value: userBalance}(amountOutMin, path, address(this), deadline + 5 minutes);
     }
 
     receive() external payable {}

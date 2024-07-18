@@ -31,7 +31,9 @@ contract SandwichSwapTest is Test {
         path[0] = weth;
         path[1] = usdc;
 
+        console2.log("before: ",IERC20(weth).balanceOf(address(attacker)));
         attacker.frontrun(router, weth, usdc);
+        console2.log("after: ", IERC20(weth).balanceOf(address(attacker)));
         victim.performSwap(path);
         attacker.backrun(router, weth, usdc);
 

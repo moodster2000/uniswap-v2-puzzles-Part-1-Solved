@@ -27,13 +27,17 @@ contract AddLiquidTest is Test {
         (uint256 reserve0, uint256 reserve1,) = IUniswapV2Pair(pool).getReserves();
         uint256 _totalSupply = IUniswapV2Pair(pool).totalSupply();
 
+        console2.log("USDC Reserve: ",reserve0);
+        console2.log("ETH Reserve: ",reserve1);
+        console2.log("Ratio : ",reserve1/reserve0);
+
         vm.prank(address(0xb0b));
         addLiquid.addLiquidity(usdc, weth, pool, reserve0, reserve1);
 
         uint256 foo = (1000 * 10 ** 6) - (IUniswapV2Pair(usdc).balanceOf(address(addLiquid)));
-
+        console2.log("Post USDC holdings: ",foo);
         uint256 puzzleBal = IUniswapV2Pair(pool).balanceOf(address(0xb0b));
-
+        console2.log("Bal: ",puzzleBal);
         uint256 bar = (foo * reserve1) / reserve0;
 
         uint256 expectBal = min((foo * _totalSupply) / (reserve0), (bar * _totalSupply) / (reserve1));

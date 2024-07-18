@@ -14,15 +14,30 @@ contract SimpleSwap {
      *
      */
     function performSwap(address pool, address weth, address usdc) public {
-        /**
-         *     swap(uint256 amount0Out, uint256 amount1Out, address to, bytes calldata data);
-         *
-         *     amount0Out: the amount of USDC to receive from swap.
-         *     amount1Out: the amount of WETH to receive from swap.
-         *     to: recipient address to receive the USDC tokens.
-         *     data: leave it empty.
-         */
+        IUniswapV2Pair pair = IUniswapV2Pair(pool);
 
-        // your code start here
+        // Get reserves
+        (uint112 reserveUSDC, uint112 reserveWETH, ) = pair.getReserves();
+
+        // Calculate amount of USDC to receive using 0.3% slippage
+        uint256 amountWETH = 1 ether; // Swap 1 WETH
+        uint256 amountUSDCOut = getAmountOut(amountWETH, reserveWETH, reserveUSDC);
+
+        // Ensure there is enough WETH in the contract
+        require(IERC20(weth).balanceOf(address(this)) >= amountWETH, "Insufficient WETH balance");
+
+        // Transfer WETH to the pair contract
+        IERC20(weth).transfer(pool, amountWETH);
+
+        // Swap WETH for USDC
+        (uint256 amount0Out, uint256 amount1Out) = pair.token0() == usdc ? (amountUSDCOut, uint256(0)) : (uint256(0), amountUSDCOut);
+        pair.swap(amount0Out, amount1Out, address(this), new bytes(0));
+    }
+
+    function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut) internal pure returns (uint256) {
+        uint256 amountInWithFee = amountIn * 997; // Uniswap fee is 0.3%
+        uint256 numerator = amountInWithFee * reserveOut;
+        uint256 denominator = (reserveIn * 1000) + amountInWithFee;
+        return numerator / denominator;
     }
 }
